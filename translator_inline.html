@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Translation App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#5D5CDE',
+                        secondary: '#4A4A8F',
+                        accent: '#8E8EF5',
+                        light: '#F9F9FF',
+                        dark: '#181824'
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    }
+                },
+            }
+        }
+    </script>
+    <style>
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.05);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(93, 92, 222, 0.5);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(93, 92, 222, 0.8);
+        }
+
+        /* Smooth transitions */
+        .transition-all {
+            transition: all 0.3s ease;
+        }
+
+        /* Chat bubble animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .chat-message {
+            animation: fadeIn 0.3s ease-out forwards;
+        }
+
+        /* Tab underline animation */
+        .tab-indicator {
+            transition: transform 0.3s ease;
+        }
+
+        /* Video controls custom styling */
+        video::-webkit-media-controls-panel {
+            background-image: linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0) 100%);
+        }
+    </style>
+</head>
+<body class="bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 transition-colors min-h-screen">
+    <div class="container mx-auto px-4 py-6 max-w-5xl">
+        <h1 class="text-3xl font-bold text-center mb-6">Advanced Translation App</h1>
+        
+        <!-- Tab Navigation -->
+        <div class="mb-6 relative border-b border-gray-200 dark:border-gray-700">
+            <div class="flex space-x-8">
+                <button id="tab-text" class="px-1 py-4 text-primary font-medium border-b-2 border-primary relative -mb-px" data-tab="text-tab">
+                    <i class="fas fa-file-alt mr-2"></i>Text
+                </button>
+                <button id="tab-video" class="px-1 py-4 text-gray-500 dark:text-gray-400 font-medium hover:text-primary dark:hover:text-primary" data-tab="video-tab">
+                    <i class="fas fa-video mr-2"></i>Video
+                </button>
+                <button id="tab-chat" class="px-1 py-4 text-gray-500 dark:text-gray-400 font-medium hover:text-primary dark:hover:text-primary" data-tab="chat-tab">
+                    <i class="fas fa-comments mr-2"></i>Chat History
+                </button>
+            </div>
+        </div>
+        
+        <!-- Text Translation Tab -->
+        <div id="text-tab" class="tab-content">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6">
+                <form id="translation-form" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="source-language" class="block text-sm font-medium mb-1">Source Language</label>
+                            <select id="source-language" class="w-full px-4 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-base">
+                                <option value="auto">Detect Language</option>
+                                <option value="English">English</option>
+                                <option value="Spanish">Spanish</option>
+                                <option value="French">French</option>
+                                <option value="German">German</option>
+                                <option value="Italian">Italian</option>
+                                <option value="Portuguese">Portuguese</option>
+                                <option value="Russian">Russian</option>
+                                <option value="Japanese">Japanese</option>
+                                <option value="Chinese">Chinese</option>
+                                <option value="Korean">Korean</option>
+                                <option value="Arabic">Arabic</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="target-language" class="block text-sm font-medium mb-1">Target Language</label>
+                            <select id="target-language" class="w-full px-4 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-base">
+                                <option value="English">English</option>
+                                <option value="Spanish">Spanish</option>
+                                <option value="French">French</option>
+                                <option value="German">German</option>
+                                <option value="Italian">Italian</option>
+                                <option value="Portuguese">Portuguese</option>
+                                <option value="Russian">Russian</option>
+                                <option value="Japanese">Japanese</option>
+                                <option value="Chinese">Chinese</option>
+                                <option value="Korean">Korean</option>
+                                <option value="Arabic">Arabic</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Select AI Model</label>
+                        <div class="flex flex-col sm:flex-row gap-4">
+                            <label class="flex items-center space-x-2 p-3 border rounded-md cursor-pointer bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 hover:border-primary dark:hover:border-primary">
+                                <input type="radio" name="model" value="Claude-3.7-Sonnet" checked class="text-primary focus:ring-primary">
+                                <span>Claude-3.7-Sonnet</span>
+                            </label>
+                            <label class="flex items-center space-x-2 p-3 border rounded-md cursor-pointer bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 hover:border-primary dark:hover:border-primary">
+                                <input type="radio" name="model" value="Gemini-2.0-Pro" class="text-primary focus:ring-primary">
+                                <span>Gemini-2.0-Pro</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label for="source-text" class="block text-sm font-medium mb-1">Text to Translate</label>
+                        <textarea id="source-text" rows="5" class="w-full px-4 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-base" placeholder="Enter text to translate..."></textarea>
+                    </div>
+                    
+                    <button type="submit" class="w-full bg-primary hover:bg-opacity-90 text-white font-medium py-2 px-4 rounded-md transition-colors">
+                        Translate
+                    </button>
+                </form>
+            </div>
+            
+            <div id="loading" class="hidden bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 text-center">
+                <div class="flex justify-center items-center space-x-2">
+                    <div class="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-primary"></div>
+                    <p>Translating... This may take a moment.</p>
+                </div>
+            </div>
+            
+            <div id="result-container" class="hidden bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+                <h2 class="text-xl font-bold mb-3">Translation Result</h2>
+                <div id="translation-result" class="bg-gray-50 dark:bg-gray-700 p-4 rounded-md whitespace-pre-wrap"></div>
+                <div class="flex justify-end mt-4 space-x-2">
+                    <button id="copy-btn" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-md transition-colors">
+                        Copy
+                    </button>
+                    <button id="add-to-chat-btn" class="px-4 py-2 bg-primary text-white hover:bg-opacity-90 rounded-md transition-colors">
+                        Save to Chat
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Video Translation Tab -->
+        <div id="video-tab" class="tab-content hidden">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6">
+                <form id="video-form" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="video-source-language" class="block text-sm font-medium mb-1">Source Language</label>
+                            <select id="video-source-language" class="w-full px-4 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-base">
+                                <option value="auto">Detect Language</option>
+                                <option value="English">English</option>
+                                <option value="Spanish">Spanish</option>
+                                <option value="French">French</option>
+                                <option value="German">German</option>
+                                <option value="Italian">Italian</option>
+                                <option value="Portuguese">Portuguese</option>
+                                <option value="Russian">Russian</option>
+                                <option value="Japanese">Japanese</option>
+                                <option value="Chinese">Chinese</option>
+                                <option value="Korean">Korean</option>
+                                <option value="Arabic">Arabic</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="video-target-language" class="block text-sm font-medium mb-1">Target Language</label>
+                            <select id="video-target-language" class="w-full px-4 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-base">
+                                <option value="English">English</option>
+                                <option value="Spanish">Spanish</option>
+                                <option value="French">French</option>
+                                <option value="German">German</option>
+                                <option value="Italian">Italian</option>
+                                <option value="Portuguese">Portuguese</option>
+                                <option value="Russian">Russian</option>
+                                <option value="Japanese">Japanese</option>
+                                <option value="Chinese">Chinese</option>
+                                <option value="Korean">Korean</option>
+                                <option value="Arabic">Arabic</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Select AI Model</label>
+                        <div class="flex flex-col sm:flex-row gap-4">
+                            <label class="flex items-center space-x-2 p-3 border rounded-md cursor-pointer bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 hover:border-primary dark:hover:border-primary">
+                                <input type="radio" name="video-model" value="Claude-3.7-Sonnet" checked class="text-primary focus:ring-primary">
+                                <span>Claude-3.7-Sonnet</span>
+                            </label>
+                            <label class="flex items-center space-x-2 p-3 border rounded-md cursor-pointer bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 hover:border-primary dark:hover:border-primary">
+                                <input type="radio" name="video-model" value="Gemini-2.0-Pro" class="text-primary focus:ring-primary">
+                                <span>Gemini-2.0-Pro</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label for="video-url" class="block text-sm font-medium mb-1">Video URL (YouTube)</label>
+                        <input type="text" id="video-url" class="w-full px-4 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-base" placeholder="Enter YouTube video URL...">
+                        <p class="text-xs text-gray-500 mt-1">Supports direct YouTube URLs (e.g., https://www.youtube.com/watch?v=VIDEOID)</p>
+                    </div>
+                    
+                    <div class="video-container hidden">
+                        <h3 class="text-lg font-medium mb-2">Video Preview</h3>
+                        <div class="aspect-w-16 aspect-h-9 bg-black rounded-lg overflow-hidden">
+                            <iframe id="youtube-embed" class="w-full h-full" frameborder="0" allowfullscreen></iframe>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="w-full bg-primary hover:bg-opacity-90 text-white font-medium py-2 px-4 rounded-md transition-colors">
+                        Transcribe & Translate
+                    </button>
+                </form>
+            </div>
+            
+            <div id="video-loading" class="hidden bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 text-center">
+                <div class="flex justify-center items-center space-x-2">
+                    <div class="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-primary"></div>
+                    <p>Processing video... This may take several minutes.</p>
+                </div>
+            </div>
+            
+            <div id="video-result-container" class="hidden bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+                <h2 class="text-xl font-bold mb-3">Translation Result</h2>
+                <div id="video-translation-result" class="bg-gray-50 dark:bg-gray-700 p-4 rounded-md whitespace-pre-wrap"></div>
+                <div class="flex justify-end mt-4 space-x-2">
+                    <button id="video-copy-btn" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-md transition-colors">
+                        Copy
+                    </button>
+                    <button id="video-add-to-chat-btn" class="px-4 py-2 bg-primary text-white hover:bg-opacity-90 rounded-md transition-colors">
+                        Save to Chat
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Chat History Tab -->
+        <div id="chat-tab" class="tab-content hidden">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold">Translation History</h2>
+                    <button id="clear-history" class="px-3 py-1 text-sm bg-red-500 text-white hover:bg-red-600 rounded-md transition-colors">
+                        Clear History
+                    </button>
+                </div>
+                
+                <div id="chat-container" class="space-y-4 h-[400px] overflow-y-auto pr-2">
+                    <div class="flex justify-center items-center h-full text-gray-500 dark:text-gray-400">
+                        <p>No translation history yet. Translate something to see it here!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load Font Awesome for icons -->
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+
+    <script>
+        // Check for dark mode preference
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        
+        // Listen for dark mode changes
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+        
+        // Initialize chat history array
+        let chatHistory = [];
+        
+        // Tab navigation
+        document.querySelectorAll('[data-tab]').forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Hide all tab contents
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.add('hidden');
+                });
+                
+                // Reset tab styles
+                document.querySelectorAll('[data-tab]').forEach(t => {
+                    t.classList.remove('text-primary', 'border-b-2', 'border-primary', '-mb-px');
+                    t.classList.add('text-gray-500', 'dark:text-gray-400');
+                });
+                
+                // Show selected tab content
+                const tabId = tab.getAttribute('data-tab');
+                document.getElementById(tabId).classList.remove('hidden');
+                
+                // Style active tab
+                tab.classList.remove('text-gray-500', 'dark:text-gray-400');
+                tab.classList.add('text-primary', 'border-b-2', 'border-primary', '-mb-px');
+            });
+        });
+        
+        // Extract YouTube video ID from URL
+        function getYouTubeVideoId(url) {
+            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+            const match = url.match(regExp);
+            return (match && match[2].length === 11) ? match[2] : null;
+        }
+        
+        // Video URL input handling
+        document.getElementById('video-url').addEventListener('input', function() {
+            const videoUrl = this.value.trim();
+            const videoId = getYouTubeVideoId(videoUrl);
+            const videoContainer = document.querySelector('.video-container');
+            
+            if (videoId) {
+                document.getElementById('youtube-embed').src = `https://www.youtube.com/embed/${videoId}`;
+                videoContainer.classList.remove('hidden');
+            } else {
+                videoContainer.classList.add('hidden');
+            }
+        });
+        
+        // Add to chat history
+        function addToHistory(sourceText, translatedText, sourceLang, targetLang, model, type = 'text') {
+            const timestamp = new Date().toLocaleTimeString();
+            
+            chatHistory.unshift({
+                id: Date.now(),
+                sourceText,
+                translatedText,
+                sourceLang,
+                targetLang,
+                model,
+                timestamp,
+                type
+            });
+            
+            updateChatUI();
+        }
+        
+        // Update chat UI
+        function updateChatUI() {
+            const chatContainer = document.getElementById('chat-container');
+            
+            if (chatHistory.length === 0) {
+                chatContainer.innerHTML = `
+                    <div class="flex justify-center items-center h-full text-gray-500 dark:text-gray-400">
+                        <p>No translation history yet. Translate something to see it here!</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            chatContainer.innerHTML = '';
+            
+            chatHistory.forEach(item => {
+                const sourceDisplay = item.sourceText.length > 100 ? item.sourceText.substring(0, 100) + '...' : item.sourceText;
+                const translationDisplay = item.translatedText.length > 100 ? item.translatedText.substring(0, 100) + '...' : item.translatedText;
+                
+                const chatItem = document.createElement('div');
+                chatItem.className = 'chat-message bg-gray-50 dark:bg-gray-700 rounded-lg p-4 shadow-sm';
+                chatItem.innerHTML = `
+                    <div class="flex justify-between items-start mb-2">
+                        <div>
+                            <span class="font-medium">${item.sourceLang} → ${item.targetLang}</span>
+                            <span class="text-xs text-gray-500 dark:text-gray-400 ml-2">${item.timestamp}</span>
+                        </div>
+                        <span class="px-2 py-1 bg-gray-200 dark:bg-gray-600 text-xs rounded-full">${item.model}</span>
+                    </div>
+                    <div class="grid grid-cols-1 gap-2">
+                        <div class="bg-white dark:bg-gray-800 p-2 rounded">
+                            <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Original (${item.sourceLang}):</p>
+                            <p class="text-sm">${sourceDisplay}</p>
+                        </div>
+                        <div class="bg-white dark:bg-gray-800 p-2 rounded">
+                            <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Translation (${item.targetLang}):</p>
+                            <p class="text-sm">${translationDisplay}</p>
+                        </div>
+                    </div>
+                    <div class="flex justify-end mt-2 space-x-2">
+                        <button class="view-full-btn px-2 py-1 text-xs bg-primary text-white hover:bg-opacity-90 rounded transition-colors" data-id="${item.id}">
+                            View Full
+                        </button>
+                        <button class="delete-btn px-2 py-1 text-xs bg-red-500 text-white hover:bg-red-600 rounded transition-colors" data-id="${item.id}">
+                            Delete
+                        </button>
+                    </div>
+                `;
+                
+                chatContainer.appendChild(chatItem);
+            });
+            
+            // Add event listeners to new buttons
+            document.querySelectorAll('.view-full-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const id = parseInt(btn.getAttribute('data-id'));
+                    const item = chatHistory.find(item => item.id === id);
+                    
+                    if (item) {
+                        const modalContainer = document.createElement('div');
+                        modalContainer.className = 'fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50';
+                        modalContainer.innerHTML = `
+                            <div class="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-lg w-full max-h-[80vh] overflow-y-auto">
+                                <div class="flex justify-between items-center mb-4">
+                                    <h3 class="text-xl font-bold">${item.sourceLang} → ${item.targetLang}</h3>
+                                    <button class="close-modal text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                                <div class="mb-4">
+                                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Original (${item.sourceLang}):</p>
+                                    <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded whitespace-pre-wrap">${item.sourceText}</div>
+                                </div>
+                                <div class="mb-4">
+                                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Translation (${item.targetLang}):</p>
+                                    <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded whitespace-pre-wrap">${item.translatedText}</div>
+                                </div>
+                                <div class="flex justify-end space-x-2">
+                                    <button class="copy-full-btn px-3 py-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded">
+                                        Copy Translation
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                        
+                        document.body.appendChild(modalContainer);
+                        
+                        // Close modal
+                        modalContainer.querySelector('.close-modal').addEventListener('click', () => {
+                            document.body.removeChild(modalContainer);
+                        });
+                        
+                        // Copy translation
+                        modalContainer.querySelector('.copy-full-btn').addEventListener('click', () => {
+                            navigator.clipboard.writeText(item.translatedText)
+                                .then(() => {
+                                    const btn = modalContainer.querySelector('.copy-full-btn');
+                                    btn.textContent = 'Copied!';
+                                    setTimeout(() => {
+                                        btn.textContent = 'Copy Translation';
+                                    }, 2000);
+                                })
+                                .catch(err => {
+                                    console.error('Failed to copy: ', err);
+                                });
+                        });
+                        
+                        // Close modal when clicking outside
+                        modalContainer.addEventListener('click', (e) => {
+                            if (e.target === modalContainer) {
+                                document.body.removeChild(modalContainer);
+                            }
+                        });
+                    }
+                });
+            });
+            
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const id = parseInt(btn.getAttribute('data-id'));
+                    chatHistory = chatHistory.filter(item => item.id !== id);
+                    updateChatUI();
+                });
+            });
+        }
+        
+        // Clear history button
+        document.getElementById('clear-history').addEventListener('click', () => {
+            if (confirm('Are you sure you want to clear all translation history?')) {
+                chatHistory = [];
+                updateChatUI();
+            }
+        });
+        
+        // Register handler for text translation
+        window.Poe.registerHandler("translation-handler", (result, context) => {
+            const loadingElement = document.getElementById('loading');
+            const resultContainer = document.getElementById('result-container');
+            const translationResult = document.getElementById('translation-result');
+            
+            // Get the first response (we only expect one bot to respond)
+            const response = result.responses[0];
+            
+            if (response.status === "error") {
+                loadingElement.classList.add('hidden');
+                resultContainer.classList.remove('hidden');
+                translationResult.innerHTML = `<span class="text-red-500">Error: ${response.statusText || 'An error occurred during translation.'}</span>`;
+            } else if (response.status === "incomplete") {
+                // Show partial response while streaming
+                resultContainer.classList.remove('hidden');
+                translationResult.textContent = response.content;
+            } else if (response.status === "complete") {
+                // Update with final content
+                loadingElement.classList.add('hidden');
+                resultContainer.classList.remove('hidden');
+                translationResult.textContent = response.content;
+                
+                // Save context for Add to Chat button
+                translationResult.dataset.sourceText = context.sourceText;
+                translationResult.dataset.sourceLang = context.sourceLang;
+                translationResult.dataset.targetLang = context.targetLang;
+                translationResult.dataset.model = context.model;
+            }
+        });
+        
+        // Register handler for video translation
+        window.Poe.registerHandler("video-translation-handler", (result, context) => {
+            const loadingElement = document.getElementById('video-loading');
+            const resultContainer = document.getElementById('video-result-container');
+            const translationResult = document.getElementById('video-translation-result');
+            
+            // Get the first response (we only expect one bot to respond)
+            const response = result.responses[0];
+            
+            if (response.status === "error") {
+                loadingElement.classList.add('hidden');
+                resultContainer.classList.remove('hidden');
+                translationResult.innerHTML = `<span class="text-red-500">Error: ${response.statusText || 'An error occurred during video processing.'}</span>`;
+            } else if (response.status === "incomplete") {
+                // Show partial response while streaming
+                resultContainer.classList.remove('hidden');
+                translationResult.textContent = response.content;
+            } else if (response.status === "complete") {
+                // Update with final content
+                loadingElement.classList.add('hidden');
+                resultContainer.classList.remove('hidden');
+                translationResult.textContent = response.content;
+                
+                // Save context for Add to Chat button
+                translationResult.dataset.videoUrl = context.videoUrl;
+                translationResult.dataset.sourceLang = context.sourceLang;
+                translationResult.dataset.targetLang = context.targetLang;
+                translationResult.dataset.model = context.model;
+            }
+        });
+        
+        // Handle text translation form submission
+        document.getElementById('translation-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const sourceText = document.getElementById('source-text').value.trim();
+            if (!sourceText) {
+                alert('Please enter text to translate.');
+                return;
+            }
+            
+            const sourceLanguage = document.getElementById('source-language').value;
+            const targetLanguage = document.getElementById('target-language').value;
+            const model = document.querySelector('input[name="model"]:checked').value;
+            
+            // Show loading state
+            document.getElementById('loading').classList.remove('hidden');
+            document.getElementById('result-container').classList.add('hidden');
+            
+            // Format source language string
+            const sourceLanguageStr = sourceLanguage === 'auto' ? 'auto-detected language' : sourceLanguage;
+            
+            // Construct the prompt
+            const prompt = `@${model} Translate the following text from ${sourceLanguageStr} to ${targetLanguage}. Return only the translated text without explanations, additional text, or formatting:
+
+${sourceText}`;
+            
+            try {
+                await window.Poe.sendUserMessage(prompt, {
+                    handler: "translation-handler",
+                    stream: true,
+                    openChat: false,
+                    handlerContext: {
+                        sourceText: sourceText,
+                        sourceLang: sourceLanguage === 'auto' ? 'Auto' : sourceLanguage,
+                        targetLang: targetLanguage,
+                        model: model
+                    }
+                });
+            } catch (err) {
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('result-container').classList.remove('hidden');
+                document.getElementById('translation-result').innerHTML = `<span class="text-red-500">Error: ${err.message || 'Failed to send translation request.'}</span>`;
+            }
+        });
+        
+        // Handle video translation form submission
+        document.getElementById('video-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const videoUrl = document.getElementById('video-url').value.trim();
+            if (!videoUrl) {
+                alert('Please enter a YouTube video URL.');
+                return;
+            }
+            
+            const videoId = getYouTubeVideoId(videoUrl);
+            if (!videoId) {
+                alert('Invalid YouTube URL. Please enter a valid YouTube video URL.');
+                return;
+            }
+            
+            const sourceLanguage = document.getElementById('video-source-language').value;
+            const targetLanguage = document.getElementById('video-target-language').value;
+            const model = document.querySelector('input[name="video-model"]:checked').value;
+            
+            // Show loading state
+            document.getElementById('video-loading').classList.remove('hidden');
+            document.getElementById('video-result-container').classList.add('hidden');
+            
+            // Format source language string
+            const sourceLanguageStr = sourceLanguage === 'auto' ? 'auto-detected language' : sourceLanguage;
+            
+            // Construct the prompt
+            const prompt = `@${model} Please transcribe and translate the content from the YouTube video at ${videoUrl} from ${sourceLanguageStr} to ${targetLanguage}. Only provide the translated transcript without additional explanations or formatting.`;
+            
+            try {
+                await window.Poe.sendUserMessage(prompt, {
+                    handler: "video-translation-handler",
+                    stream: true,
+                    openChat: false,
+                    handlerContext: {
+                        videoUrl: videoUrl,
+                        sourceLang: sourceLanguage === 'auto' ? 'Auto' : sourceLanguage,
+                        targetLang: targetLanguage,
+                        model: model
+                    }
+                });
+            } catch (err) {
+                document.getElementById('video-loading').classList.add('hidden');
+                document.getElementById('video-result-container').classList.remove('hidden');
+                document.getElementById('video-translation-result').innerHTML = `<span class="text-red-500">Error: ${err.message || 'Failed to send video translation request.'}</span>`;
+            }
+        });
+        
+        // Copy text translation result
+        document.getElementById('copy-btn').addEventListener('click', () => {
+            const text = document.getElementById('translation-result').textContent;
+            
+            navigator.clipboard.writeText(text)
+                .then(() => {
+                    const btn = document.getElementById('copy-btn');
+                    btn.textContent = 'Copied!';
+                    setTimeout(() => {
+                        btn.textContent = 'Copy';
+                    }, 2000);
+                })
+                .catch(err => {
+                    console.error('Failed to copy: ', err);
+                });
+        });
+        
+        // Copy video translation result
+        document.getElementById('video-copy-btn').addEventListener('click', () => {
+            const text = document.getElementById('video-translation-result').textContent;
+            
+            navigator.clipboard.writeText(text)
+                .then(() => {
+                    const btn = document.getElementById('video-copy-btn');
+                    btn.textContent = 'Copied!';
+                    setTimeout(() => {
+                        btn.textContent = 'Copy';
+                    }, 2000);
+                })
+                .catch(err => {
+                    console.error('Failed to copy: ', err);
+                });
+        });
+        
+        // Add text translation to chat
+        document.getElementById('add-to-chat-btn').addEventListener('click', () => {
+            const resultElement = document.getElementById('translation-result');
+            const translatedText = resultElement.textContent;
+            const sourceText = resultElement.dataset.sourceText;
+            const sourceLang = resultElement.dataset.sourceLang;
+            const targetLang = resultElement.dataset.targetLang;
+            const model = resultElement.dataset.model;
+            
+            addToHistory(sourceText, translatedText, sourceLang, targetLang, model, 'text');
+            
+            // Show confirmation
+            const btn = document.getElementById('add-to-chat-btn');
+            btn.textContent = 'Saved!';
+            setTimeout(() => {
+                btn.textContent = 'Save to Chat';
+            }, 2000);
+            
+            // Switch to chat tab
+            document.getElementById('tab-chat').click();
+        });
+        
+        // Add video translation to chat
+        document.getElementById('video-add-to-chat-btn').addEventListener('click', () => {
+            const resultElement = document.getElementById('video-translation-result');
+            const translatedText = resultElement.textContent;
+            const videoUrl = resultElement.dataset.videoUrl;
+            const sourceLang = resultElement.dataset.sourceLang;
+            const targetLang = resultElement.dataset.targetLang;
+            const model = resultElement.dataset.model;
+            
+            addToHistory(videoUrl, translatedText, sourceLang, targetLang, model, 'video');
+            
+            // Show confirmation
+            const btn = document.getElementById('video-add-to-chat-btn');
+            btn.textContent = 'Saved!';
+            setTimeout(() => {
+                btn.textContent = 'Save to Chat';
+            }, 2000);
+            
+            // Switch to chat tab
+            document.getElementById('tab-chat').click();
+        });
+    </script>
+</body>
+</html>
