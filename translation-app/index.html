@@ -3,11 +3,366 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Advanced Translation App with text, video, and chat functionality">
+    <meta name="theme-color" content="#5D5CDE">
     <title>Translation App</title>
+
+    <!-- Favicon -->
+    <link rel="icon" href="assets/icons/app-icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="assets/icons/app-icon-180.png">
+
+    <!-- Base Styles -->
     <link rel="stylesheet" href="css/main.css">
+
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous">
+
+    <!-- External Libraries -->
+    <script src="lib/marked.min.js" defer></script>
+    <script src="lib/dexie.min.js" defer></script>
 </head>
 <body>
-    <h1>Welcome to the Translation App</h1>
-    <script src="js/app.js"></script>
+<header class="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-30">
+    <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+        <div class="flex items-center space-x-2">
+            <img src="assets/icons/app-icon.svg" alt="App Logo" class="w-8 h-8">
+            <h1 class="text-xl font-semibold">Translation App</h1>
+        </div>
+
+        <div class="flex items-center space-x-4">
+            <button id="theme-toggle" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" aria-label="Toggle dark mode">
+                <i class="fas fa-moon"></i>
+            </button>
+        </div>
+    </div>
+</header>
+
+<main class="container mx-auto px-4 py-6 max-w-5xl">
+    <!-- Tab Navigation -->
+    <div class="mb-6 relative border-b border-gray-200 dark:border-gray-700">
+        <div class="flex space-x-6 overflow-x-auto pb-1">
+            <button id="tab-text" class="tab-nav-item active" data-tab="text-tab">
+                <i class="fas fa-file-alt mr-2"></i>Text
+            </button>
+            <button id="tab-video" class="tab-nav-item" data-tab="video-tab">
+                <i class="fas fa-video mr-2"></i>Video
+            </button>
+            <button id="tab-chat" class="tab-nav-item" data-tab="chat-tab">
+                <i class="fas fa-history mr-2"></i>History
+            </button>
+            <button id="tab-chatroom" class="tab-nav-item" data-tab="chatroom-tab">
+                <i class="fas fa-users mr-2"></i>Chat Room
+            </button>
+        </div>
+    </div>
+
+    <!-- Text Translation Tab -->
+    <div id="text-tab" class="tab-content active">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6">
+            <form id="translation-form" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="form-group">
+                        <label for="source-language" class="form-label">Source Language</label>
+                        <select id="source-language" class="form-select">
+                            <option value="auto">Detect Language</option>
+                            <option value="English">English</option>
+                            <option value="Spanish">Spanish</option>
+                            <option value="French">French</option>
+                            <option value="German">German</option>
+                            <option value="Italian">Italian</option>
+                            <option value="Portuguese">Portuguese</option>
+                            <option value="Russian">Russian</option>
+                            <option value="Japanese">Japanese</option>
+                            <option value="Chinese">Chinese</option>
+                            <option value="Korean">Korean</option>
+                            <option value="Arabic">Arabic</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="target-language" class="form-label">Target Language</label>
+                        <select id="target-language" class="form-select">
+                            <option value="English">English</option>
+                            <option value="Spanish">Spanish</option>
+                            <option value="French">French</option>
+                            <option value="German">German</option>
+                            <option value="Italian">Italian</option>
+                            <option value="Portuguese">Portuguese</option>
+                            <option value="Russian">Russian</option>
+                            <option value="Japanese">Japanese</option>
+                            <option value="Chinese">Chinese</option>
+                            <option value="Korean">Korean</option>
+                            <option value="Arabic">Arabic</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Select AI Model</label>
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <label class="flex items-center space-x-2 p-3 border rounded-md cursor-pointer bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 hover:border-primary dark:hover:border-primary">
+                            <input type="radio" name="model" value="Claude-3.7-Sonnet" checked class="form-radio">
+                            <span>Claude-3.7-Sonnet</span>
+                        </label>
+                        <label class="flex items-center space-x-2 p-3 border rounded-md cursor-pointer bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 hover:border-primary dark:hover:border-primary">
+                            <input type="radio" name="model" value="Gemini-2.0-Pro" class="form-radio">
+                            <span>Gemini-2.0-Pro</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="source-text" class="form-label">Text to Translate</label>
+                    <textarea id="source-text" rows="5" class="form-textarea" placeholder="Enter text to translate..."></textarea>
+                </div>
+
+                <button type="submit" class="form-button form-button-primary w-full">
+                    Translate
+                </button>
+            </form>
+        </div>
+
+        <div id="loading" class="hidden bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 text-center">
+            <div class="flex justify-center items-center space-x-2">
+                <div class="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-primary"></div>
+                <p>Translating... This may take a moment.</p>
+            </div>
+        </div>
+
+        <div id="result-container" class="hidden translation-container">
+            <div class="translation-header">
+                <h2 class="translation-title">Translation Result</h2>
+                <div class="translation-controls">
+                    <button id="copy-btn" class="translation-control-button" aria-label="Copy translation">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                    <button id="add-to-chat-btn" class="translation-control-button" aria-label="Save to history">
+                        <i class="fas fa-save"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="translation-body">
+                <div id="translation-result" class="translation-text"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Video Translation Tab -->
+    <div id="video-tab" class="tab-content hidden">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6">
+            <form id="video-form" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="form-group">
+                        <label for="video-source-language" class="form-label">Source Language</label>
+                        <select id="video-source-language" class="form-select">
+                            <option value="auto">Detect Language</option>
+                            <option value="English">English</option>
+                            <option value="Spanish">Spanish</option>
+                            <option value="French">French</option>
+                            <option value="German">German</option>
+                            <option value="Italian">Italian</option>
+                            <option value="Portuguese">Portuguese</option>
+                            <option value="Russian">Russian</option>
+                            <option value="Japanese">Japanese</option>
+                            <option value="Chinese">Chinese</option>
+                            <option value="Korean">Korean</option>
+                            <option value="Arabic">Arabic</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="video-target-language" class="form-label">Target Language</label>
+                        <select id="video-target-language" class="form-select">
+                            <option value="English">English</option>
+                            <option value="Spanish">Spanish</option>
+                            <option value="French">French</option>
+                            <option value="German">German</option>
+                            <option value="Italian">Italian</option>
+                            <option value="Portuguese">Portuguese</option>
+                            <option value="Russian">Russian</option>
+                            <option value="Japanese">Japanese</option>
+                            <option value="Chinese">Chinese</option>
+                            <option value="Korean">Korean</option>
+                            <option value="Arabic">Arabic</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Select AI Model</label>
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <label class="flex items-center space-x-2 p-3 border rounded-md cursor-pointer bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 hover:border-primary dark:hover:border-primary">
+                            <input type="radio" name="video-model" value="Claude-3.7-Sonnet" checked class="form-radio">
+                            <span>Claude-3.7-Sonnet</span>
+                        </label>
+                        <label class="flex items-center space-x-2 p-3 border rounded-md cursor-pointer bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 hover:border-primary dark:hover:border-primary">
+                            <input type="radio" name="video-model" value="Gemini-2.0-Pro" class="form-radio">
+                            <span>Gemini-2.0-Pro</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="video-url" class="form-label">Video URL (YouTube)</label>
+                    <input type="text" id="video-url" class="form-input" placeholder="Enter YouTube video URL...">
+                    <p class="form-hint">Supports direct YouTube URLs (e.g., https://www.youtube.com/watch?v=VIDEOID)</p>
+                </div>
+
+                <div class="video-container hidden">
+                    <h3 class="text-lg font-medium mb-2">Video Preview</h3>
+                    <div class="aspect-w-16 aspect-h-9 bg-black rounded-lg overflow-hidden">
+                        <iframe id="youtube-embed" class="w-full h-full" frameborder="0" allowfullscreen></iframe>
+                    </div>
+                </div>
+
+                <button type="submit" class="form-button form-button-primary w-full">
+                    Transcribe & Translate
+                </button>
+            </form>
+        </div>
+
+        <div id="video-loading" class="hidden bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 text-center">
+            <div class="flex justify-center items-center space-x-2">
+                <div class="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-primary"></div>
+                <p>Processing video... This may take several minutes.</p>
+            </div>
+        </div>
+
+        <div id="video-result-container" class="hidden translation-container">
+            <div class="translation-header">
+                <h2 class="translation-title">Video Translation</h2>
+                <div class="translation-controls">
+                    <button id="video-copy-btn" class="translation-control-button" aria-label="Copy translation">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                    <button id="video-add-to-chat-btn" class="translation-control-button" aria-label="Save to history">
+                        <i class="fas fa-save"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="translation-body">
+                <div id="video-translation-result" class="translation-text"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Translation History Tab -->
+    <div id="chat-tab" class="tab-content hidden">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold">Translation History</h2>
+                <button id="clear-history" class="form-button form-button-danger text-sm">
+                    Clear History
+                </button>
+            </div>
+
+            <div id="chat-container" class="space-y-4 h-[400px] overflow-y-auto pr-2">
+                <div class="flex justify-center items-center h-full text-gray-500 dark:text-gray-400">
+                    <p>No translation history yet. Translate something to see it here!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat Room Tab -->
+    <div id="chatroom-tab" class="tab-content hidden">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold">Chat Room</h2>
+                <div class="flex space-x-2">
+                    <button id="add-user-btn" class="form-button form-button-primary text-sm">
+                        <i class="fas fa-user-plus mr-1"></i> Add User
+                    </button>
+                    <button id="export-chat-btn" class="form-button form-button-secondary text-sm">
+                        <i class="fas fa-file-export mr-1"></i> Export Logs
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                <div class="md:col-span-1 bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                    <h3 class="font-medium text-lg mb-3">Participants</h3>
+                    <div id="participants-container" class="space-y-2 max-h-[300px] overflow-y-auto">
+                        <div class="bg-white dark:bg-gray-800 rounded p-2 flex items-center space-x-2">
+                            <div class="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center">
+                                <span class="text-white text-xs font-bold">A</span>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium">Admin</p>
+                                <p class="text-xs text-gray-500">Always present</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="md:col-span-3 flex flex-col">
+                    <div class="bg-white dark:bg-gray-800 rounded-lg p-3 mb-3">
+                        <div class="flex flex-wrap items-center gap-3">
+                            <div class="flex items-center">
+                                <input type="checkbox" id="enable-chat-translation" class="form-checkbox mr-2">
+                                <label for="enable-chat-translation" class="text-sm font-medium">Enable Translation</label>
+                            </div>
+
+                            <div class="flex items-center translation-options" style="display: none;">
+                                <label for="chat-target-language" class="text-sm font-medium mr-2">Translate to:</label>
+                                <select id="chat-target-language" class="form-select text-sm py-1">
+                                    <option value="English">English</option>
+                                    <option value="Spanish">Spanish</option>
+                                    <option value="French">French</option>
+                                    <option value="German">German</option>
+                                    <option value="Italian">Italian</option>
+                                    <option value="Portuguese">Portuguese</option>
+                                    <option value="Russian">Russian</option>
+                                    <option value="Japanese">Japanese</option>
+                                    <option value="Chinese">Chinese</option>
+                                    <option value="Korean">Korean</option>
+                                    <option value="Arabic">Arabic</option>
+                                </select>
+                            </div>
+
+                            <div class="flex items-center translation-options" style="display: none;">
+                                <label for="chat-translation-model" class="text-sm font-medium mr-2">Model:</label>
+                                <select id="chat-translation-model" class="form-select text-sm py-1">
+                                    <option value="Claude-3.7-Sonnet">Claude-3.7-Sonnet</option>
+                                    <option value="Gemini-2.0-Pro">Gemini-2.0-Pro</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="chat-messages" class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 h-[300px] overflow-y-auto mb-4">
+                        <div class="flex justify-center items-center h-full text-gray-500 dark:text-gray-400">
+                            <p>No messages yet. Start the conversation!</p>
+                        </div>
+                    </div>
+
+                    <div class="flex space-x-2">
+                        <select id="sender-select" class="form-select">
+                            <option value="admin">Admin</option>
+                        </select>
+                        <input type="text" id="message-input" class="form-input flex-1" placeholder="Type your message...">
+                        <button id="send-message-btn" class="form-button form-button-primary">
+                            Send
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 py-4 mt-8">
+    <div class="container mx-auto px-4 text-center text-gray-500 dark:text-gray-400 text-sm">
+        <p>© 2023 Translation App. All rights reserved.</p>
+        <p class="mt-1">Powered by Claude and Gemini AI models.</p>
+    </div>
+</footer>
+
+<!-- Notification container for toast messages -->
+<div id="notification-container" class="fixed z-50 top-4 right-4 flex flex-col space-y-2 pointer-events-none"></div>
+
+<!-- Application JavaScript -->
+<!-- App Core -->
+<script src="js/app.js" type="module"></script>
+
+<!-- Individual modules will be imported by app.js -->
 </body>
 </html>

@@ -1,10 +1,8 @@
 /**
  * Name Generator Utility
  *
- * This module provides functions for generating random, fun usernames
+ * Provides functions for generating random, fun usernames
  * composed of an adjective, a noun, and a random number.
- *
- * Used primarily for chat user creation to provide friendly, memorable names.
  */
 
 // Array of fun adjectives for name generation
@@ -27,10 +25,7 @@ const funnyNouns = [
     'Bagel', 'Burrito', 'Biscuit', 'Nugget', 'Pretzel'
 ];
 
-/**
- * Additional themed name collections that can be used for special events
- * or specific contexts.
- */
+// Collections of themed name components
 const themesCollections = {
     space: {
         adjectives: ['Cosmic', 'Stellar', 'Lunar', 'Solar', 'Astral', 'Galactic', 'Orbital'],
@@ -47,10 +42,11 @@ const themesCollections = {
 };
 
 /**
- * Generates a random funny name by combining an adjective, a noun, and a number.
- * @returns {string} A randomly generated funny name, e.g. "SillyPenguin42"
+ * Generate a random funny name
+ *
+ * @returns {string} A randomly generated funny name
  */
-function generateFunnyName() {
+export function generateFunnyName() {
     const adjective = funnyAdjectives[Math.floor(Math.random() * funnyAdjectives.length)];
     const noun = funnyNouns[Math.floor(Math.random() * funnyNouns.length)];
     const number = Math.floor(Math.random() * 100);
@@ -58,11 +54,12 @@ function generateFunnyName() {
 }
 
 /**
- * Generates a themed name based on the provided theme.
- * @param {string} theme - The theme to use for name generation (space, ocean, fantasy)
- * @returns {string} A themed name, e.g. "CosmicNebula42" for theme "space"
+ * Generate a themed name based on the provided theme
+ *
+ * @param {string} theme - The theme to use for generation (space, ocean, fantasy)
+ * @returns {string} A themed name
  */
-function generateThemedName(theme) {
+export function generateThemedName(theme) {
     const collection = themesCollections[theme];
 
     if (!collection) {
@@ -78,14 +75,13 @@ function generateThemedName(theme) {
 }
 
 /**
- * Generates a unique name that doesn't exist in the provided list of existing names.
- * Useful when you need to ensure no duplicate names in a group.
+ * Generate a unique name that doesn't exist in the provided list
  *
  * @param {Array<string>} existingNames - Array of names that are already in use
  * @param {string} [theme] - Optional theme for name generation
  * @returns {string} A unique generated name
  */
-function generateUniqueName(existingNames = [], theme = null) {
+export function generateUniqueName(existingNames = [], theme = null) {
     let name;
     let attempts = 0;
     const maxAttempts = 30; // Prevent infinite loops
@@ -105,13 +101,13 @@ function generateUniqueName(existingNames = [], theme = null) {
 }
 
 /**
- * Generates a list of random names.
+ * Generate multiple random names
  *
  * @param {number} count - Number of names to generate
  * @param {string} [theme] - Optional theme for name generation
- * @returns {Array<string>} An array of generated names
+ * @returns {Array<string>} Array of generated names
  */
-function generateNameBatch(count, theme = null) {
+export function generateNameBatch(count, theme = null) {
     const names = [];
     const generatorFn = theme ? () => generateThemedName(theme) : generateFunnyName;
 
@@ -122,13 +118,5 @@ function generateNameBatch(count, theme = null) {
     return names;
 }
 
-// Export the name generation functions and collections
-export {
-    generateFunnyName,
-    generateThemedName,
-    generateUniqueName,
-    generateNameBatch,
-    funnyAdjectives,
-    funnyNouns,
-    themesCollections
-};
+// Export collections for direct access if needed
+export { funnyAdjectives, funnyNouns, themesCollections };
