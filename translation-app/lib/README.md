@@ -42,6 +42,7 @@ Chat messages - Storing message content, timestamps, and user associations
 Translation history - Storing previously translated content for quick access
 Here's a simplified example of how it's initialized in our application:
 
+```markdown
 javascript
 Copy
 // In js/chat/storage.js
