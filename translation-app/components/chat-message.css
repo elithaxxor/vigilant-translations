@@ -1,1 +1,61 @@
-/* Message styling */
+/**
+ * Chat Message Component Styling
+ * 
+ * This file contains styles for chat messages in the chat room tab,
+ * including regular messages, system messages, and translated messages.
+ */
+
+/* Base chat message styles */
+.chat-message {
+  margin-bottom: 1rem;
+  animation: fadeIn 0.3s ease-out forwards;
+  transition: all 0.2s ease;
+  position: relative;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  line-height: 1.5;
+}
+
+.chat-message:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* Message container layout */
+.chat-message-container {
+  display: flex;
+  padding: 0.75rem;
+}
+
+/* User avatar styles */
+.chat-message-avatar {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 9999px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-shrink: 0;
+  color: white;
+  font-weight: 700;
+  font-size: 0.75rem;
+  margin-right: 0.75rem;
+}
+
+/* Message content wrapper */
+.chat-message-content-wrapper {
+  flex: 1;
+  min-width: 0; /* Ensures content can shrink below min-content width */
+}
+
+/* Message header with user info and timestamp */
+.chat-message-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.25rem;
+}
+
+.chat-message-name {
+  font-weight: 500;
+  font-size: 0.875rem;
+  overflow: hidden;
